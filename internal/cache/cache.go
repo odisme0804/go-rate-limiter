@@ -1,6 +1,6 @@
 package cache
 
-//go:generate mockgen -destination=./mock/mockCache.go -package=mockCache github.com/odisme0804/go-rate-limiter/cache Cache
+//go:generate mockgen -destination=./mock/mockCache.go -package=mockCache go-rate-limiter/internal/cache Cache
 
 import (
 	"context"

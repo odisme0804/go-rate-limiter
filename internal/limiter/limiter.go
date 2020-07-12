@@ -1,6 +1,6 @@
 package limiter
 
-//go:generate mockgen -destination=./mock/mockLimiter.go -package=mockLimiter github.com/odisme0804/go-rate-limiter/limiter Limiter
+//go:generate mockgen -destination=./mock/mockLimiter.go -package=mockLimiter go-rate-limiter/internal/limiter Limiter
 
 import (
 	"context"
