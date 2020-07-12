@@ -220,11 +220,12 @@ func (s *limiterSuite) TestCheck_ValidRequest_CurrentCntMatch() {
 func (s *limiterSuite) TestTake_ExceedRequest_ErrReachLimit() {
 	// given
 	testKey := "test_key"
-	expectedCnt := s.limiter.GetReuqestLimit()
+	expectedCnt := s.limiter.GetReuqestLimit() + 1
 	expectedExp := testTime.Add(s.limiter.GetRequestWindow()).Unix()
 	expectedErr := ErrReachLimit
 
 	s.mockThatCacheReturnBucket(s.limiter.GetReuqestLimit(), expectedExp)
+	s.mockThatCacheSetSucc()
 
 	// when
 	currentCnt, expiration, err := s.limiter.Take(testKey)
@@ -261,7 +262,7 @@ func (s *limiterSuite) TestTake_ConcurrentRequest_CurrentCntEqRequestCnt() {
 
 	// given
 	testKey := "test_key"
-	expectedCnt := s.limiter.GetReuqestLimit()
+	expectedCnt := s.limiter.GetReuqestLimit() + 1
 	expectedExp := testTime.Add(s.limiter.GetRequestWindow()).Unix()
 	expectedErr := ErrReachLimit
 

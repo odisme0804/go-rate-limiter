@@ -50,7 +50,12 @@ func (r *TokenBucketLimiter) Check(key string) (int, int64, error) {
 		return 0, 0, ErrInternal
 	}
 
-	return bucket.Count, bucket.Expiration, nil
+	var err error
+	if bucket.Count > r.requestLimit {
+		err = ErrReachLimit
+	}
+
+	return bucket.Count, bucket.Expiration, err
 }
 
 func (r *TokenBucketLimiter) Take(key string) (int, int64, error) {
@@ -73,17 +78,18 @@ func (r *TokenBucketLimiter) Take(key string) (int, int64, error) {
 		return 0, 0, ErrInternal
 	}
 
-	if bucket.Count >= r.requestLimit {
-		return bucket.Count, bucket.Expiration, ErrReachLimit
-	}
-
 	bucket.Count++
 	remainDuration := bucket.Expiration - time.Now().Unix()
 	if err := r.cache.Set(context.TODO(), key, bucket, time.Second*time.Duration(remainDuration)); err != nil {
 		return 0, 0, ErrInternal
 	}
 
-	return bucket.Count, bucket.Expiration, nil
+	var err error
+	if bucket.Count > r.requestLimit {
+		err = ErrReachLimit
+	}
+
+	return bucket.Count, bucket.Expiration, err
 }
 
 func (r *TokenBucketLimiter) GetRequestWindow() time.Duration {

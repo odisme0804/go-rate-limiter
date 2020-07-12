@@ -15,12 +15,12 @@ import (
 
 var rateLimiter limiter.Limiter
 
-type pingHandlerRsp struct {
+type requestHandlerRsp struct {
 	CurrentCnt int   `json:"current_cnt"`
 	Expiration int64 `json:"expiration"`
 }
 
-type pingHandlerErrRsp struct {
+type requestHandlerErrRsp struct {
 	Error string `json:"error"`
 }
 
@@ -32,8 +32,7 @@ func init() {
 func main() {
 	mux := http.NewServeMux()
 
-	mux.Handle("/", homeHandler)
-	mux.Handle("/ping", pingHandler)
+	mux.Handle("/request", requestHandler)
 
 	log.Println("Listening...")
 	if err := http.ListenAndServe("0.0.0.0:8080", mux); err != nil {
@@ -41,32 +40,18 @@ func main() {
 	}
 }
 
-var homeHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+var requestHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
 	ipAddr := getRequestIP(r)
-	currentCnt, expiration, err := rateLimiter.Check(ipAddr)
-	rsp := pingHandlerRsp{
-		CurrentCnt: currentCnt,
-		Expiration: expiration,
-	}
-	bs, err := json.Marshal(rsp)
-	if err != nil {
-		log.Printf("[homeHandler] json.Marshal err: %+v, rsp: %+v", err, rsp)
-	}
-	w.Write(bs)
-}
-
-var pingHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
-	ipAddr := getRequestIP(r)
-	log.Printf("ping from: %s", ipAddr)
 	currentCnt, expiration, err := rateLimiter.Take(ipAddr)
+	log.Printf("ip: %s, req #: %d, exp: %d", ipAddr, currentCnt, expiration)
 	if err != nil {
 		if errors.Is(limiter.ErrReachLimit, err) {
-			rsp := pingHandlerErrRsp{
+			rsp := requestHandlerErrRsp{
 				Error: "reach request limit",
 			}
 			bs, err := json.Marshal(rsp)
 			if err != nil {
-				log.Printf("[pingHandler] err: %+v, rsp: %+v", err, rsp)
+				log.Printf("[requestHandler] err: %+v, rsp: %+v", err, rsp)
 			}
 			w.Header().Set("Retry-After", strconv.FormatInt(expiration-time.Now().Unix(), 10))
 			w.WriteHeader(http.StatusTooManyRequests)
@@ -74,13 +59,13 @@ var pingHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
-	rsp := pingHandlerRsp{
+	rsp := requestHandlerRsp{
 		CurrentCnt: currentCnt,
 		Expiration: expiration,
 	}
 	bs, err := json.Marshal(rsp)
 	if err != nil {
-		log.Printf("[pingHandler] json.Marshal err: %+v, rsp: %+v", err, rsp)
+		log.Printf("[requestHandler] json.Marshal err: %+v, rsp: %+v", err, rsp)
 	}
 	w.Write(bs)
 }
