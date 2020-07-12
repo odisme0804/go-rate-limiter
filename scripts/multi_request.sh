@@ -8,3 +8,5 @@ for i in $(seq 1 $1)
 do  
     curl -i -X GET localhost:8080/request &
 done
+
+sleep 1
