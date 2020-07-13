@@ -41,6 +41,7 @@ func main() {
 }
 
 var requestHandler http.HandlerFunc = func(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	ipAddr := getRequestIP(r)
 	currentCnt, expiration, err := rateLimiter.Take(ipAddr)
 	log.Printf("ip: %s, req #: %d, exp: %d", ipAddr, currentCnt, expiration)
